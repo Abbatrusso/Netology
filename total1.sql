@@ -114,5 +114,19 @@ INSERT INTO Patient VALUES
 (34, 8);
 
 -- Запросы
+-- 1. Вывести список отделений, врачей отделения и кол-во пациентов у каждого врача (id, название департамента, врач, количество пациентов)
 
--- 1. 
+SELECT 
+    Department.id,
+    Department.name,
+    Employee.name,
+    COUNT(emp_id) AS count_patient
+FROM Patient
+JOIN Employee ON Patient.emp_id = Employee.id
+JOIN Department ON Employee.department_id = Department.id
+GROUP BY Department.id, Department.name, Employee.name
+ORDER BY Department.id
+
+-- 2.
+
+
