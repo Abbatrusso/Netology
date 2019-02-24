@@ -1,4 +1,5 @@
--- Создание и заполнение таблиц
+-- Создание таблиц
+-- Отделения
 DROP TABLE IF EXISTS Department;
 
 CREATE TABLE Department( 
@@ -6,16 +7,35 @@ CREATE TABLE Department(
     name VARCHAR
 );
 
+-- Главврачи
+DROP TABLE IF EXISTS Сhief_doc;
+
+CREATE TABLE Сhief_doc(
+    id INTEGER PRIMARY KEY,
+    name VARCHAR
+);
+
+-- Сотрудники
 DROP TABLE IF EXISTS Employee;
 
 CREATE TABLE Employee(
     id INTEGER PRIMARY KEY,
-    department_id INTEGER,
-    chief_doc_id INTEGER,
+    department_id INTEGER REFERENCES Department(id),
+    chief_doc_id INTEGER REFERENCES Сhief_doc(id),
     name VARCHAR,
     num_public INTEGER
 );
 
+-- Пациенты
+DROP TABLE IF EXISTS Patient;
+
+CREATE TABLE Patient(
+    id INTEGER PRIMARY KEY,
+    emp_id INTEGER REFERENCES Employee(id) 
+);
+
+
+-- Заполнение таблиц данными
 INSERT INTO Department VALUES
 ('1', 'Therapy'),
 ('2', 'Neurology'),
@@ -23,6 +43,17 @@ INSERT INTO Department VALUES
 ('4', 'Gastroenterology'),
 ('5', 'Hematology'),
 ('6', 'Oncology');
+
+INSERT INTO Сhief_doc VALUES
+('1', 'Ivan'),
+('2', 'Igor'),
+('3', 'Gergii'),
+('4', 'Maya'),
+('5', 'Nicolay'),
+('6', 'Nadejda'),
+('7', 'Lubov'),
+('8', 'Zinaida'),
+('9', 'Fedor');
 
 INSERT INTO Employee VALUES
 ('1', '1', '1', 'Kate', 4),
@@ -46,68 +77,42 @@ INSERT INTO Employee VALUES
 ('19', '6', '9', 'Jessy', 19),
 ('20', '6', '9', 'Ann', 18);
 
--- A. Вывести список названий департаментов и количество главных врачей в каждом из этих департаментов
+INSERT INTO Patient VALUES
+(1, 20),
+(2, 20),
+(3, 19),
+(4, 19),
+(5, 19),
+(6, 18),
+(7, 16),
+(8, 16),
+(9, 15),
+(10, 14),
+(11, 13),
+(12, 12),
+(13, 12),
+(14, 11),
+(15, 10),
+(16, 9),
+(17, 8),
+(18, 7),
+(19, 6),
+(20, 5),
+(21, 11),
+(22, 3),
+(23, 2),
+(24, 1),
+(25, 17),
+(26, 19),
+(27, 10),
+(28, 19),
+(29, 10),
+(30, 19),
+(31, 10),
+(32, 19),
+(33, 2),
+(34, 8);
 
-SELECT 
-    Department.name, 
-    COUNT(DISTINCT(Employee.chief_doc_id))
-FROM Department
-RIGHT JOIN Employee ON Department.id = Employee.department_id
-GROUP BY Department.name;
--- B. Вывести список департаментов, в которых работают 3 и более сотрудников (id и название департамента, количество сотрудников)
+-- Запросы
 
-SELECT 
-    Department.name,
-    Department.id,
-    COUNT(DISTINCT(Employee.name))
-FROM Department
-RIGHT JOIN Employee ON Department.id = Employee.department_id
-GROUP BY Department.name, Department.id
-HAVING COUNT(DISTINCT(Employee.name)) >= 3
-
-
--- C. Вывести список департаментов с максимальным количеством публикаций  (id и название департамента, количество публикаций)
-
-SELECT
-    Department.id, 
-    Department.name,
-    MAX(Employee.num_public) AS max_pub
-FROM Department
-RIGHT JOIN Employee ON Department.id = Employee.department_id
-GROUP BY Department.name, Department.id
-ORDER BY Department.id;
-
--- D. Вывести список сотрудников с минимальным количеством публикаций в своем департаменте (id и название департамента, имя сотрудника, количество публикаций)
-
--- Берет только одного автора статей с мин.кол-ом, не работает когда авторов > 1 
-
-WITH temp_t AS 
-(
-  SELECT
-    DISTINCT(department_id) AS id_d,
-    Department.name AS name_d,
-    Employee.name AS name_e,
-    MIN(num_public) OVER (PARTITION BY department_id) AS min_pub,
-    num_public AS num_pub
-  FROM Employee
-  JOIN Department ON department_id = Department.id 
-  ORDER BY id_d
-)
-
-SELECT id_d, name_d, name_e, min_pub
-FROM temp_t
-WHERE num_pub = min_pub
-
--- E. Вывести список департаментов и среднее количество публикаций для тех департаментов, в которых работает более одного главного врача (id и название департамента, среднее количество публикаций)
-SELECT
-    Department.id, 
-    Department.name,
-    AVG(Employee.num_public) AS avg_pub
-FROM Department
-RIGHT JOIN Employee ON Department.id = Employee.department_id
-GROUP BY Department.name, Department.id
-HAVING COUNT(DISTINCT(Employee.chief_doc_id)) > 1
-
-
-
-
+-- 1. 
