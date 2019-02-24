@@ -25,3 +25,6 @@ FROM temp_t
 WHERE max_r <> min_r
 ORDER BY userid
 LIMIT 30;
+
+
+
