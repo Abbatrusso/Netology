@@ -114,19 +114,48 @@ INSERT INTO Patient VALUES
 (34, 8);
 
 -- Запросы
--- 1. Вывести список отделений, врачей отделения и кол-во пациентов у каждого врача (id, название департамента, врач, количество пациентов)
+-- 1. Вывести полную информацию из таблиц (id, отделение, глав.врач, врач, кол-во публикаций врача, кол-во пациентов)
 
-SELECT 
-    Department.id,
-    Department.name,
-    Employee.name,
-    COUNT(emp_id) AS count_patient
+SELECT
+  Department.id AS id_dep,
+  Department.name AS dep_name,
+  Сhief_doc.name AS chief_doc_name,
+  Employee.name AS doc_name,
+  Employee.num_public AS num_pub,
+  COUNT(emp_id) AS count_patient
 FROM Patient
 RIGHT JOIN Employee ON Patient.emp_id = Employee.id
 JOIN Department ON Employee.department_id = Department.id
-GROUP BY Department.id, Department.name, Employee.name
-ORDER BY Department.id
+JOIN Сhief_doc ON Сhief_doc.id = Employee.chief_doc_id
+GROUP BY id_dep, dep_name, chief_doc_name, doc_name, num_pub, emp_id
+ORDER BY id_dep
 
--- 2.
+
+-- 2. Вывести список отделений с кол-вом врачей, статей  и пациентов по отделениям (id, отделение, кол-во врачей, кол-во статей, кол-во пациентов)
+
+WITH temp_t AS
+(
+SELECT
+  Department.id AS id_dep,
+  Department.name AS dep_name,
+  Employee.name AS doc_name,
+  Employee.num_public AS num_pub,
+  COUNT(emp_id) AS count_patient
+FROM Patient
+RIGHT JOIN Employee ON Patient.emp_id = Employee.id
+JOIN Department ON Employee.department_id = Department.id
+GROUP BY id_dep, dep_name, doc_name, num_pub, emp_id
+)
+
+SELECT 
+    DISTINCT (id_dep), 
+    dep_name,
+    COUNT(doc_name) OVER (PARTITION BY id_dep) AS sum_emp,
+    SUM(num_pub) OVER (PARTITION BY id_dep) AS sum_pub,
+    SUM(count_patient) OVER (PARTITION BY id_dep) AS sum_patient
+FROM temp_t
+ORDER BY id_dep
+
+-- 3.
 
 
