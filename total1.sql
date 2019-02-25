@@ -181,6 +181,57 @@ FROM temp_t
 WHERE sum_pub > 0
 ORDER BY dep_id
 
--- 4.
+-- 4. Вывести список отделений в которых более одного глав.врача с общим количеством персонала состоящим из врачей и главных врачей 
+--    (id, отделение, кол-во глав.врачей, кол-во врачей, кол-во персонала)
+
+SELECT
+    Department.id AS dep_id,
+    Department.name AS dep_name,
+    COUNT(DISTINCT(Employee.chief_doc_id)) AS count_chief_doc,
+    COUNT(Employee.id) AS count_doc,               
+    COUNT(DISTINCT(Employee.chief_doc_id)) + COUNT(Employee.id) AS count_pers
+FROM Department
+RIGHT JOIN Employee ON Department.id = Employee.department_id
+GROUP BY dep_id
+HAVING COUNT(DISTINCT(Employee.chief_doc_id)) > 1
+ORDER BY dep_id
+-- 5. Вывести список отделений с общим количеством персонала состоящим из врачей и главных врачей, 
+--    кол-ом пациентов и отношением сколько врачей приходится на одного пациента 
+--    (id, отделение, кол-во персонала, кол-во пациентов, среднее кол-во персонала на одного пациента)
+
+WITH temp_t AS
+(
+SELECT
+  Department.id AS dep_id,
+  Department.name AS dep_name,
+  Employee.name AS doc_name,
+  Employee.num_public AS num_pub,
+  COUNT(emp_id) AS count_patient
+FROM Patient
+RIGHT JOIN Employee ON Patient.emp_id = Employee.id
+JOIN Department ON Employee.department_id = Department.id
+GROUP BY dep_id, doc_name, num_pub, emp_id
+)
+
+SELECT 
+    DISTINCT (dep_id), 
+    dep_name,
+    COUNT(doc_name) OVER (PARTITION BY dep_id) + count_chief_doc AS sum_pers,
+    SUM(count_patient) OVER (PARTITION BY dep_id) AS sum_patient,
+    ((COUNT(doc_name) OVER (PARTITION BY dep_id) + count_chief_doc) / SUM(count_patient) OVER (PARTITION BY dep_id)) AS pers_for_pat
+FROM temp_t
+JOIN 
+  (
+    SELECT 
+        Department.id AS id_dep,
+        COUNT(DISTINCT(Employee.chief_doc_id)) AS count_chief_doc
+    FROM Department
+    RIGHT JOIN Employee ON Department.id = Employee.department_id
+    GROUP BY id_dep
+  ) AS temp_tt 
+ON dep_id = temp_tt.id_dep                       
+ORDER BY dep_id
+
+-- 6.              
 
 
