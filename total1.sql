@@ -178,6 +178,7 @@ SELECT
     avg_pub,
     sum_pub / SUM(sum_pub) OVER () AS per_pub
 FROM temp_t
+WHERE sum_pub > 0
 ORDER BY dep_id
 
 -- 4.
