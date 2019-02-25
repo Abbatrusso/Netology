@@ -156,6 +156,27 @@ SELECT
 FROM temp_t
 ORDER BY id_dep
 
--- 3.
+-- 3. Вывести список отделений со средним количеством публикаций по отделу и нормированный вклад отдела в общее кол-во публикаций (id, отделение, среднее кол-во публикаций отделения, кол-во публикаций отделения/общую сумму публикаций) 
+
+WITH temp_t AS
+(
+SELECT
+    DISTINCT (Department.id) AS dep_id, 
+    Department.name AS dep_name,
+    SUM(Employee.num_public) OVER (PARTITION BY Department.id) AS sum_pub,
+    AVG(Employee.num_public) OVER (PARTITION BY Department.id) AS avg_pub
+FROM Department
+JOIN Employee ON Department.id = Employee.department_id
+)
+
+SELECT
+    dep_id,
+    dep_name,
+    avg_pub,
+    sum_pub / SUM(sum_pub) OVER () AS per_pub
+FROM temp_t
+ORDER BY dep_id
+
+-- 4.
 
 
