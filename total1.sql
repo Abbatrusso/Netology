@@ -232,6 +232,95 @@ JOIN
 ON dep_id = temp_tt.id_dep                       
 ORDER BY dep_id
 
--- 6.              
+-- 6. Вывести список департаментов, в которых работают менее 5 сотрудников 
+--    (id, отделение, количество сотрудников)
+
+SELECT 
+    Department.id AS dep_id,
+    Department.name AS dep_name,
+    COUNT(DISTINCT(Employee.name)) AS count_emp
+FROM Department
+RIGHT JOIN Employee ON Department.id = Employee.department_id
+GROUP BY dep_id
+HAVING COUNT(DISTINCT(Employee.name)) < 5
+
+
+-- 7. Вывести список отделений где работает более одного глав.врача с минимальным количеством публикаций  
+--    (id, отделение, количество публикаций)
+
+SELECT
+    Department.id AS dep_id, 
+    Department.name AS dep_name,
+    MIN(Employee.num_public) AS min_pub
+FROM Department
+RIGHT JOIN Employee ON Department.id = Employee.department_id
+GROUP BY dep_id
+HAVING COUNT(DISTINCT(Employee.chief_doc_id)) > 1
+ORDER BY dep_id;
+
+
+-- 8. Вывести по одному сотруднику с максимальным количеством публикаций в своем отделении 
+--     (id, отделение, имя врача, количество публикаций)
+
+SELECT
+   DISTINCT(department_id) AS dep_id,
+   Department.name AS dep_name,
+   FIRST_VALUE(Employee.name) OVER (PARTITION BY department_id ORDER BY num_public DESC) AS name_doc,
+   MAX(num_public) OVER (PARTITION BY department_id) AS max_pub
+FROM Employee
+JOIN Department ON department_id = Department.id
+ORDER BY dep_id
+
+-- 9. Вывести список отделений с общим количеством людей состоящим из пациентов, врачей и глав.врачей 
+--    (id, отделение, кол-во людей)
+
+WITH temp_t AS
+(
+SELECT
+  Department.id AS dep_id,
+  Department.name AS dep_name,
+  Employee.name AS doc_name,
+  Employee.num_public AS num_pub,
+  COUNT(emp_id) AS count_patient
+FROM Patient
+RIGHT JOIN Employee ON Patient.emp_id = Employee.id
+JOIN Department ON Employee.department_id = Department.id
+GROUP BY dep_id, doc_name, num_pub, emp_id
+)
+
+SELECT 
+    DISTINCT (dep_id), 
+    dep_name,
+    COUNT(doc_name) OVER (PARTITION BY dep_id) 
+        + count_chief_doc
+        + SUM(count_patient) OVER (PARTITION BY dep_id) AS sum_people
+FROM temp_t
+JOIN 
+  (
+    SELECT 
+        Department.id AS id_dep,
+        COUNT(DISTINCT(Employee.chief_doc_id)) AS count_chief_doc
+    FROM Department
+    RIGHT JOIN Employee ON Department.id = Employee.department_id
+    GROUP BY id_dep
+  ) AS temp_tt 
+ON dep_id = temp_tt.id_dep                       
+ORDER BY dep_id
+
+
+-- 10. Вывести общее кол-во врачей, статей и пациентов
+--       (кол-во врачей, кол-во статей, кол-во поциентов)
+
+SELECT DISTINCT
+    COUNT(Employee.name) OVER() AS count_doc,
+    SUM(Employee.num_public) OVER() AS sum_pub,
+    SUM(COUNT(emp_id)) OVER() AS sum_patient
+FROM Patient
+RIGHT JOIN Employee ON Patient.emp_id = Employee.id
+JOIN Department ON Employee.department_id = Department.id
+GROUP BY Employee.name, Employee.num_public, emp_id
+
+
+
 
 
